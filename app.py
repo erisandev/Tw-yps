@@ -1,32 +1,21 @@
-import tweepy
-import openai
 import streamlit as st
-from dotenv import load_dotenv
-import os
+import snscrape.modules.twitter as sntwitter
+import openai
 
-# Load .env
-load_dotenv()
-
-# Ambil API keys dari environment variables
-TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# Inisialisasi API
-client = tweepy.Client(bearer_token=TWITTER_BEARER_TOKEN)
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 openai.api_key = OPENAI_API_KEY
 
-# Ambil tweet
-def get_tweets(username, count=5):
+def get_tweets_no_api(username, count=5):
+    tweets = []
     try:
-        user = client.get_user(username=username)
-        user_id = user.data.id
-        tweets = client.get_users_tweets(id=user_id, max_results=count)
-        return [tweet.text for tweet in tweets.data]
+        for i, tweet in enumerate(sntwitter.TwitterUserScraper(username).get_items()):
+            if i >= count:
+                break
+            tweets.append(tweet.content)
     except Exception as e:
-        import traceback
-        return [f"Error: {traceback.format_exc()}"]
+        return [f"Error: {e}"]
+    return tweets
 
-# Analisis tweet
 def analyze_tweet(tweet_text):
     prompt = f"""
     Analyze the following crypto-related tweet for potential performance on Kaito AI's system (Yaps):
@@ -42,14 +31,13 @@ def analyze_tweet(tweet_text):
     )
     return response['choices'][0]['message']['content']
 
-# UI Streamlit
-st.title("Twitter Content Analyzer for Kaito Yaps")
+st.title("Twitter Content Analyzer for Kaito Yaps (No API)")
 
 username = st.text_input("Enter Twitter Username")
 count = st.slider("Number of tweets to analyze", 1, 10, 5)
 
 if st.button("Analyze"):
-    tweets = get_tweets(username, count)
+    tweets = get_tweets_no_api(username, count)
     for i, tweet in enumerate(tweets):
         st.subheader(f"Tweet {i+1}:")
         st.write(tweet)
