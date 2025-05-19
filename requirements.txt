@@ -1,3 +1,4 @@
 streamlit
-tweepy
 openai
+tweepy
+python-dotenv
