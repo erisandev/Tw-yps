@@ -1,4 +1,3 @@
 streamlit
 openai
-tweepy
-python-dotenv
+snscrape
